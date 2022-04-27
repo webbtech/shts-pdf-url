@@ -1,0 +1,174 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  shts-pdf-url
+  
+  SAM Template for shts-pdf-url
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
+
+Parameters:
+  ParamBillTo:
+    Description: Required. Value of Tag key BillTo
+    Type: String
+    Default: 'ShorthillsTreeService'
+  ParamCertificateArn:
+    Description: Domain Certificate Arn
+    Type: String
+  ParamCustomDomainName:
+    Description: Custom Domain Name
+    Type: String
+  ParamHostedZoneId:
+    Description: Hosted Zone ID
+    Type: String
+  ParamStorageBucket:
+    Description: s3 Storage bucket for all files
+    Type: String
+
+Resources:
+
+  RestApi:
+    Type: AWS::Serverless::Api
+    DeletionPolicy: Delete
+    DependsOn: PdfUrlFunction
+    Properties:
+      StageName: Prod
+      EndpointConfiguration: 
+        Type: REGIONAL
+      Cors: "'*'"
+      Auth:
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          UsagePlanName: GatewayAuthorization
+      # These don't appear to show up where expected
+      Tags:
+        BillTo: !Ref ParamBillTo
+        Owner: "Webbtech"
+      
+      GatewayResponses:
+        UNAUTHORIZED:
+          StatusCode: "401"
+          ResponseTemplates: 
+              "application/json": '{ "message": $context.error.messageString }'
+          ResponseParameters:
+            Headers:
+              Access-Control-Expose-Headers: "'WWW-Authenticate'"
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'*'"
+  
+      Domain:
+        DomainName: !Ref ParamCustomDomainName
+        CertificateArn: !Ref ParamCertificateArn
+        EndpointConfiguration: "REGIONAL"
+        Route53:
+          HostedZoneId: !Ref ParamHostedZoneId
+          EvaluateTargetHealth: true
+          DistributionDomainName:
+            Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
+  PdfUrlFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: url
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+      Tracing: Active
+      Role: !GetAtt PdfUrlRole.Arn
+      Timeout: 20 #keep at 20 for production
+      MemorySize: 128
+      Environment:
+        Variables:
+          Stage: production
+      
+      Events:
+        Ping:
+          Type: Api
+          Properties:
+            Path: /
+            Method: GET
+            RestApiId: !Ref RestApi
+            Auth:
+              ApiKeyRequired: false
+        Pdf:
+          Type: Api
+          Properties:
+            Path: /url
+            Method: POST
+            RestApiId: !Ref RestApi
+            Auth:
+              ApiKeyRequired: true
+
+      Tags:
+        BillTo: !Ref ParamBillTo
+
+  PdfUrlRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: FunctionLogAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: '*'
+      - PolicyName: FunctionXRayAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+            Resource: '*'
+      - PolicyName: FunctionS3Access
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:*
+            Resource: 
+              Fn::Sub: arn:aws:s3:::${ParamStorageBucket}/*
+
+Outputs:
+  ApiId:
+    Description: API ID
+    Value:
+      Ref: RestApi  
+  ApiArn:
+    Description: "API ARN"
+    Value: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/" 
+  ApiURL:
+    Description: API URL
+    Value: !Sub "https://${ParamCustomDomainName}/"
+  ApiEndpoint:
+    Description: "API Prod stage endpoint"
+    Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  PdfUrlAPI:
+    Description: API Gateway endpoint URL for Prod environment for PdfUrlFunction
+    Value: !Sub ""     
+  PdfUrlFunction:
+    Description: "PdfUrl Lambda function ARN"
+    Value: !GetAtt PdfUrlFunction.Arn
+  ApiKey:
+    Description: "You can find your API Key in the AWS console: (Put in the request HEADER as 'x-api-key')"
+    Value: !Sub "https://console.aws.amazon.com/apigateway/home?region=${AWS::Region}#/api-keys/${RestApi}"

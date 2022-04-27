@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"reflect"
-	"strings"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -17,7 +16,7 @@ import (
 // Config struct
 type Config struct {
 	config
-	DefaultsFilePath string
+	IsDefaultsLocal bool
 }
 
 // StageEnvironment string
@@ -31,9 +30,15 @@ const (
 	ProdEnv  StageEnvironment = "prod"
 )
 
-const defaultFileName = "defaults.yml"
+const (
+	defaultFileName    = "url-defaults.yml"
+	defaultsRemotePath = "https://shts-pdf.s3.ca-central-1.amazonaws.com/public/url-defaults.yml"
+)
 
-var defs = &defaults{}
+var (
+	defs             = &defaults{}
+	defaultsFilePath string
+)
 
 // ========================== Public Methods =============================== //
 
@@ -69,29 +74,27 @@ func (c *Config) SetStageEnv(env string) (err error) {
 func (c *Config) setDefaults() (err error) {
 
 	var file []byte
+	if c.IsDefaultsLocal == true { // DefaultsRemote is explicitly set to true
 
-	if c.DefaultsFilePath == "" {
 		dir, _ := os.Getwd()
-		c.DefaultsFilePath = path.Join(dir, defaultFileName)
-		if _, err = os.Stat(c.DefaultsFilePath); os.IsNotExist(err) {
+		defaultsFilePath = path.Join(dir, defaultFileName)
+		if _, err = os.Stat(defaultsFilePath); os.IsNotExist(err) {
 			return err
 		}
-	}
 
-	// Check if remote file or local and handle accordingly
-	if strings.HasPrefix(c.DefaultsFilePath, "https") {
-		res, err := http.Get(c.DefaultsFilePath)
+		file, err = ioutil.ReadFile(defaultsFilePath)
+		if err != nil {
+			return err
+		}
+
+	} else { // using remote file path
+		res, err := http.Get(defaultsRemotePath)
 		if err != nil {
 			return err
 		}
 		defer res.Body.Close()
 
 		file, err = io.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-	} else {
-		file, err = ioutil.ReadFile(c.DefaultsFilePath)
 		if err != nil {
 			return err
 		}

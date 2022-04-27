@@ -4,9 +4,9 @@ import "time"
 
 type defaults struct {
 	AwsRegion string `yaml:"AwsRegion"`
+	ExpireHrs int    `yaml:"ExpireHrs"`
 	S3Bucket  string `yaml:"S3Bucket"`
 	Stage     string `yaml:"Stage"`
-	ExpireHrs int    `yaml:"ExpireHrs"`
 }
 
 type config struct {

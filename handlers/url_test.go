@@ -51,12 +51,12 @@ func TestValidateInput(t *testing.T) {
 
 func TestProcess(t *testing.T) {
 	t.Run("Successfully creates S3Object string", func(t *testing.T) {
-		cfg := &config.Config{DefaultsFilePath: "../config/defaults.yml"}
+		cfg := &config.Config{}
 		err := cfg.Init()
 		if err != nil {
 			t.Fatalf("Expected null error received: %s", err)
 		}
-		su := &SignedURL{cfg: cfg}
+		su := &SignedURL{Cfg: cfg}
 		su.request.Body = `{"number": 1011, "requestType": "estimate"}`
 
 		su.process()
@@ -68,12 +68,12 @@ func TestProcess(t *testing.T) {
 
 	// TODO: require test here to successfully open a signed url
 	t.Run("create signed url", func(t *testing.T) {
-		cfg := &config.Config{DefaultsFilePath: "../config/defaults.yml"}
+		cfg := &config.Config{}
 		err := cfg.Init()
 		if err != nil {
 			t.Fatalf("Expected null error received: %s", err)
 		}
-		su := &SignedURL{cfg: cfg}
+		su := &SignedURL{Cfg: cfg}
 		su.request.Body = `{"number": 1011, "requestType": "estimate"}`
 		su.process()
 
@@ -91,7 +91,7 @@ func TestProcess(t *testing.T) {
 		}
 
 		expectedMessageStart := "https://shts-pdf.s3.ca-central-1.amazonaws.com/"
-		if !strings.HasPrefix(responseBody.Message, expectedMessageStart) {
+		if !strings.HasPrefix(responseBody.Data, expectedMessageStart) {
 			t.Fatalf("Expected message to start with: %s", expectedMessageStart)
 		}
 	})

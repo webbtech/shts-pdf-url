@@ -18,4 +18,5 @@ type response struct {
 type responseBody struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
+	Data    string `json:"data"`
 }

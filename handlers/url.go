@@ -24,7 +24,7 @@ Steps (methods required) to process Signed URL include:
 */
 
 type SignedURL struct {
-	cfg         *config.Config
+	Cfg         *config.Config
 	input       *model.UrlRequest
 	request     events.APIGatewayProxyRequest
 	response    events.APIGatewayProxyResponse
@@ -74,7 +74,7 @@ func (su *SignedURL) process() {
 		prefix := TypePrefixMap[reqType]
 		su.s3ObjectKey = fmt.Sprintf("%s/%s-%d.pdf", reqType, prefix, *su.input.EstimateNumber)
 
-		url, err = awsservices.CreateSignedURL(su.cfg, su.s3ObjectKey)
+		url, err = awsservices.CreateSignedURL(su.Cfg, su.s3ObjectKey)
 		if err != nil {
 			stdError = &lerrors.StdError{
 				Caller:     "awsservices.CreateSignedURL",
@@ -96,7 +96,8 @@ func (su *SignedURL) process() {
 		logError(stdError)
 	} else {
 		rb.Code = CODE_SUCCESS
-		rb.Message = url
+		rb.Message = "Success"
+		rb.Data = url
 	}
 
 	// Create the response object

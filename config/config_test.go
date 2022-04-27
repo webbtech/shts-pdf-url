@@ -11,7 +11,7 @@ var cfg *Config
 
 func TestInitConfig(t *testing.T) {
 	t.Run("Successful Init with local file", func(t *testing.T) {
-		cfg = &Config{}
+		cfg = &Config{IsDefaultsLocal: true}
 		err := cfg.Init()
 		if err != nil {
 			t.Fatalf("Expected null error received: %s", err)
@@ -19,8 +19,7 @@ func TestInitConfig(t *testing.T) {
 	})
 
 	t.Run("Successful Init with remote file", func(t *testing.T) {
-		// cfg = &Config{}
-		cfg = &Config{DefaultsFilePath: "https://shts-pdf.s3.ca-central-1.amazonaws.com/public/defaults.yml"}
+		cfg = &Config{}
 		err := cfg.Init()
 		if err != nil {
 			t.Fatalf("Expected null error received: %s", err)
@@ -28,47 +27,15 @@ func TestInitConfig(t *testing.T) {
 	})
 }
 
-func TestGetStageEnv(t *testing.T) {
-	cfg = &Config{}
-	cfg.setDefaults()
-
-	t.Run("successfully get stage value", func(t *testing.T) {
-		stg := cfg.GetStageEnv()
-		if stg != ProdEnv {
-			t.Fatalf("Stage should be %s, have: %s", ProdEnv, stg)
-		}
-	})
-
-	t.Run("successfully set then get stage value", func(t *testing.T) {
-		cfg.SetStageEnv("test")
-		stg := cfg.GetStageEnv()
-		if stg != TestEnv {
-			t.Fatalf("Stage should be %s, have: %s", TestEnv, stg)
-		}
-	})
-}
-
 func TestSetDefaults(t *testing.T) {
 	t.Run("test setting DefaultsFilePath", func(t *testing.T) {
 
-		cfg = &Config{}
+		cfg = &Config{IsDefaultsLocal: true}
 		cfg.setDefaults()
 		dir, _ := os.Getwd()
 		expectedFilePath := path.Join(dir, defaultFileName)
-		if expectedFilePath != cfg.DefaultsFilePath {
-			t.Fatalf("DefaultsFilePath should be %s, have: %s", expectedFilePath, cfg.DefaultsFilePath)
-		}
-
-		fp := path.Join("/tmp", defaultFileName)
-		cfg = &Config{DefaultsFilePath: fp}
-		err := cfg.setDefaults()
-		expectedFilePath = fp
-
-		if expectedFilePath != cfg.DefaultsFilePath {
-			t.Fatalf("DefaultsFilePath should be %s, have: %s", expectedFilePath, cfg.DefaultsFilePath)
-		}
-		if err == nil {
-			t.Fatalf("setDefaults should return error")
+		if expectedFilePath != defaultsFilePath {
+			t.Fatalf("DefaultsFilePath should be %s, have: %s", expectedFilePath, defaultsFilePath)
 		}
 	})
 }
@@ -76,7 +43,7 @@ func TestSetDefaults(t *testing.T) {
 // TestValidateStage tests the validateStage method
 // validateStage is called at various times including in setEnvVars
 func TestValidateStage(t *testing.T) {
-	cfg = &Config{}
+	cfg = &Config{IsDefaultsLocal: true}
 	cfg.setDefaults()
 
 	t.Run("stage set from defaults file", func(t *testing.T) {
@@ -116,14 +83,15 @@ func TestValidateStage(t *testing.T) {
 	})
 }
 
+// This test does NOT run successfully when running the `run file tests` command, otherwise fine...
 func TestUrlExpireTime(t *testing.T) {
 	t.Run("sets expireTime", func(t *testing.T) {
-		cfg = &Config{}
+		cfg = &Config{IsDefaultsLocal: true}
 		cfg.Init()
 
 		expectedHrs := time.Duration(time.Duration(defs.ExpireHrs) * time.Hour)
 		if expectedHrs != cfg.UrlExpireTime {
-			t.Fatalf("UrlExpireTime should be: %d, have: %d", expectedHrs, cfg.UrlExpireTime)
+			t.Fatalf("UrlExpireTime should be: %v, have: %v", expectedHrs, cfg.UrlExpireTime)
 		}
 	})
 }
