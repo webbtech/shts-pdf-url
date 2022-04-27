@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,7 +26,8 @@ func TestPingHandler(t *testing.T) {
 		r, err := handler(events.APIGatewayProxyRequest{Path: "/"})
 
 		expectedMsg := "Healthy"
-		msg = extractMessage(r.Body)
+		fmt.Printf("r.Body: %+v\n", r.Body)
+		msg = extractMessage(r.Body, "message")
 		if msg != expectedMsg {
 			t.Fatalf("Expected error message: %s received: %s", expectedMsg, msg)
 		}
@@ -68,7 +70,7 @@ func TestURLHandler(t *testing.T) {
 			t.Fatal("Everything should be ok")
 		}
 
-		msg = extractMessage(r.Body)
+		msg = extractMessage(r.Body, "data")
 
 		expectedStrStart := "https://shts-pdf.s3.ca-central-1.amazonaws.com/estimate/est-1011.pdf"
 		if !strings.HasPrefix(msg, expectedStrStart) {
@@ -77,8 +79,8 @@ func TestURLHandler(t *testing.T) {
 	})
 }
 
-func extractMessage(b string) (msg string) {
+func extractMessage(b, key string) (msg string) {
 	var dat map[string]string
 	_ = json.Unmarshal([]byte(b), &dat)
-	return dat["message"]
+	return dat[key]
 }

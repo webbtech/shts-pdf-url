@@ -40,9 +40,9 @@ const (
 
 // FIXME: these don't (shouldn't be) uppercase vars
 var (
-	Stage             string
-	TypePrefixMap     = map[string]string{"estimate": "est", "invoice": "inv"}
-	ValidRequestTypes = []string{"estimate", "invoice"}
+	stage             string
+	typePrefixMap     = map[string]string{"estimate": "est", "invoice": "inv"}
+	validRequestTypes = []string{"estimate", "invoice"}
 )
 
 // ========================== Public Methods =============================== //
@@ -71,7 +71,7 @@ func (su *SignedURL) process() {
 	// Create s3ObjectKey and signed url
 	if stdError == nil {
 		reqType := *su.input.RequestType
-		prefix := TypePrefixMap[reqType]
+		prefix := typePrefixMap[reqType]
 		su.s3ObjectKey = fmt.Sprintf("%s/%s-%d.pdf", reqType, prefix, *su.input.EstimateNumber)
 
 		url, err = services.CreateSignedURL(su.Cfg, su.s3ObjectKey)
@@ -139,7 +139,7 @@ func (su *SignedURL) validateInput() (err *lerrors.StdError) {
 
 	// validate RequestType
 	if su.input.RequestType != nil {
-		_, found := findString(ValidRequestTypes, *su.input.RequestType)
+		_, found := findString(validRequestTypes, *su.input.RequestType)
 		if !found {
 			errStr := fmt.Sprintf(ERR_INVALID_TYPE+": \"%s\"", *su.input.RequestType)
 			inputErrs = append(inputErrs, errStr)
@@ -162,11 +162,11 @@ func (su *SignedURL) validateInput() (err *lerrors.StdError) {
 
 // NOTE: these could go into it's own package
 func logError(err *lerrors.StdError) {
-	if Stage == "" {
-		Stage = os.Getenv("Stage")
+	if stage == "" {
+		stage = os.Getenv("Stage")
 	}
 
-	if Stage != "test" {
+	if stage != "test" {
 		log.Error(err)
 	}
 }
