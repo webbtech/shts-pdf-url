@@ -11,9 +11,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	log "github.com/sirupsen/logrus"
 	lerrors "github.com/webbtech/shts-pdf-gen/errors"
-	"github.com/webbtech/shts-pdf-url/awsservices"
 	"github.com/webbtech/shts-pdf-url/config"
 	"github.com/webbtech/shts-pdf-url/model"
+	"github.com/webbtech/shts-pdf-url/services"
 )
 
 /*
@@ -74,18 +74,18 @@ func (su *SignedURL) process() {
 		prefix := TypePrefixMap[reqType]
 		su.s3ObjectKey = fmt.Sprintf("%s/%s-%d.pdf", reqType, prefix, *su.input.EstimateNumber)
 
-		url, err = awsservices.CreateSignedURL(su.Cfg, su.s3ObjectKey)
+		url, err = services.CreateSignedURL(su.Cfg, su.s3ObjectKey)
 		if err != nil {
 			stdError = &lerrors.StdError{
-				Caller:     "awsservices.CreateSignedURL",
+				Caller:     "services.CreateSignedURL",
 				Code:       lerrors.CodeApplicationError,
 				Err:        err,
 				Msg:        "Failed to create signed URL",
 				StatusCode: 400,
 			}
+		} else {
+			log.Infof("signed url created: %s", url[0:100])
 		}
-		// fmt.Printf("url: %+v\n", url)
-		// fmt.Printf("err: %+v\n", err)
 	}
 
 	// Process any errors

@@ -46,11 +46,11 @@ dev-cloud-watch:
 		ParamStorageBucket=${S3_STORAGE_BUCKET}
 
 tail-logs:
-	sam logs -n PDFGeneratorFunction --profile $(PROFILE) \
+	sam logs -n PdfUrlFunction --profile $(PROFILE) \
 	--stack-name $(STACK_NAME) --tail
 
 tail-logs-trace:
-	sam logs -n PDFGeneratorFunction --profile $(PROFILE) \
+	sam logs -n PdfUrlFunction --profile $(PROFILE) \
 	--stack-name $(STACK_NAME) --tail --include-traces
 
 validate:
