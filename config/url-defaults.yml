@@ -1,0 +1,4 @@
+AwsRegion: "ca-central-1"
+S3Bucket: "shts-pdf"
+Stage: "prod"
+ExpireHrs: 168 # 7 x 24
