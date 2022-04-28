@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -26,7 +25,6 @@ func TestPingHandler(t *testing.T) {
 		r, err := handler(events.APIGatewayProxyRequest{Path: "/"})
 
 		expectedMsg := "Healthy"
-		fmt.Printf("r.Body: %+v\n", r.Body)
 		msg = extractMessage(r.Body, "message")
 		if msg != expectedMsg {
 			t.Fatalf("Expected error message: %s received: %s", expectedMsg, msg)

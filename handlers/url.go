@@ -38,7 +38,6 @@ const (
 	CODE_SUCCESS             = "SUCCESS"
 )
 
-// FIXME: these don't (shouldn't be) uppercase vars
 var (
 	stage             string
 	typePrefixMap     = map[string]string{"estimate": "est", "invoice": "inv"}
@@ -84,7 +83,10 @@ func (su *SignedURL) process() {
 				StatusCode: 400,
 			}
 		} else {
-			log.Infof("signed url created: %s", url[0:100])
+			stg := os.Getenv("Stage")
+			if stg != "test" {
+				log.Infof("signed url created: %s", url[0:100])
+			}
 		}
 	}
 

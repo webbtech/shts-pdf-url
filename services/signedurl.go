@@ -11,7 +11,6 @@ import (
 )
 
 // Found much of this code here: https://aws.github.io/aws-sdk-go-v2/docs/code-examples/s3/generatepresignedurl/
-// TODO: tests should include a mocked version of s3.NewPresignClient
 
 // S3PresignGetObjectAPI defines the interface for the PresignGetObject function.
 // We use this interface to test the function using a mocked service.
